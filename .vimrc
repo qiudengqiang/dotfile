@@ -1,4 +1,5 @@
 set nu
+set encoding=utf-8
 
 "缩进
 set expandtab
@@ -14,8 +15,10 @@ set nocompatible
 set backspace=indent,eol,start
 set maxmempattern=5000
 
-"拷贝到系统剪贴板
-set clipboard=unnamedplus
+if has("clipboard")
+    set clipboard+=unnamedplus  
+    set clipboard+=unnamed     
+endif
 
 "启用文件类型检测
 filetype plugin indent on
@@ -34,18 +37,8 @@ set wildignore+=*/.git/*,
 
 "=================================================================
 
-"taglist settings
-"let Tlist_Ctags_Cmd = '/opt/homebrew/bin/ctags'
-let Tlist_Show_One_File = 1
-let Tlist_Exit_OnlyWindow = 1
-let Tlist_Use_Left_Window = 1
-let Tlist_WinWidth = 20
-nmap tl :TlistToggle<cr>
-
-"=================================================================
-
 "winmanager settings
-let g:winManagerWindowLayout = "FileExplorer|TagList"
+let g:winManagerWindowLayout = "FileExplorer"
 let g:winManagerWidth = 30
 let g:persistentBehaviour = 0
 let g:defaultExplorer = 0
@@ -61,15 +54,11 @@ vnoremap # y?<C-R>=escape(@", '\\/.*$^~[]')<CR><CR>
 
 "=================================================================
 
-"set tags=../../../tags
-"set tags=../tags
-
 "cscope settings
 if filereadable("cscope.out")
     cs add cscope.out
-"elseif $CSCOPE_DB != ""
-"    cs add $CSCOPE_DB
 endif
+
 nmap <Space>s :cs find s <C-R>=expand("<cword>")<CR><CR>
 nmap <Space>g :cs find g <C-R>=expand("<cword>")<CR><CR>
 nmap <Space>c :cs find c <C-R>=expand("<cword>")<CR><CR>
@@ -113,10 +102,6 @@ let g:godef_split=2
 
 " push quickfix window always to the bottom
 autocmd FileType qf wincmd J
-"=================================================================
-
-nmap <F3> :IndentLinesToggle<CR>
-"=================================================================
 
 "==============================================================================
 " NERDTree 插件
@@ -139,7 +124,7 @@ let NERDTreeShowBookmarks=2
 
 " 在终端启动vim时，共享NERDTree
 let g:nerdtree_tabs_open_on_console_startup=1
-let NERDTreeWinSize=30
+let NERDTreeWinSize=40
 let g:NERDTreeDirArrowExpandable = '+'
 let g:NERDTreeDirArrowCollapsible = '-'
 let g:NERDTreeWinPos='left'
@@ -434,11 +419,6 @@ nnoremap <silent><nowait> <space>p  :<C-u>CocListResume<CR>
 
 "=================================================================
 
-
-"=================================================================
-
-
-
 nmap cw :copen<cr>
 nmap cn :cn<cr>
 nmap cp :cp<cr>
@@ -446,7 +426,6 @@ nmap ck :cclose<cr>
 
 "=================================================================
 
-"colorscheme peachpuff
 colorscheme gruvbox
 set bg=dark
 
@@ -455,19 +434,14 @@ set bg=dark
 if exists('+colorcolumn')
     set colorcolumn=100
 else
-    "au BufWinEnter * let w:m2=matchadd('ErrorMsg', '\%>80v.\+', -1)
     au BufWinEnter * let w:m2=matchadd('ErrorMsg', '\%>100v.\+', -1)
 endif
 
 set cursorline
-"highlight CursorLine cterm=NONE ctermbg=gray ctermfg=NONE guibg=NONE guifg=NONE
-"set cursorcolumn
 
 call plug#begin()
 Plug 'lukas-reineke/indent-blankline.nvim'
-Plug 'Yggdroot/indentLine'
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries'}
-Plug 'dgryski/vim-godef'
 Plug 'scrooloose/nerdtree'
 Plug 'dyng/ctrlsf.vim'
 Plug 'yggdroot/leaderf'
