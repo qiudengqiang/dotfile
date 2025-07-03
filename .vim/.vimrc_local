@@ -1,29 +1,10 @@
-set nu
-set encoding=utf-8
-
-"缩进
-set expandtab
-set tabstop=4
-set shiftwidth=4
-set fileformat=unix
-
-syntax enable
-"syntax on
-
-set hlsearch
-set nocompatible
-set backspace=indent,eol,start
-set maxmempattern=5000
-
+" 共享系统剪贴板
 if has("clipboard")
-    set clipboard+=unnamedplus  
-    set clipboard+=unnamed     
+    set clipboard+=unnamedplus
+    set clipboard+=unnamed
 endif
 
-"启用文件类型检测
-filetype plugin indent on
-
-"行号自动跳转
+" 行号自动跳转last position
 autocmd BufReadPost *
     \ if line("'\"")>0&&line("'\"")<=line("$") |
     \   exe "normal g'\"" |
@@ -35,80 +16,66 @@ set wildignore+=*/.git/*,
       \*/cscope*,*/*.csv/,
       \*/*.log,*tags*,*/bin/*
 
-"=================================================================
-
-"winmanager settings
-let g:winManagerWindowLayout = "FileExplorer"
-let g:winManagerWidth = 30
-let g:persistentBehaviour = 0
-let g:defaultExplorer = 0
-nmap <C-W><C-F> :FirstExplorerWindow<cr>
-nmap <C-W><C-B> :BottomExplorerWindow<cr>
-nmap <silent> wm :WMToggle<cr>
-
-"=================================================================
-
-"search for visually selected text
+" search for visually selected text
 vnoremap * y/<C-R>=escape(@", '\\/.*$^~[]')<CR><CR>
 vnoremap # y?<C-R>=escape(@", '\\/.*$^~[]')<CR><CR>
 
-"=================================================================
 
-"cscope settings
-if filereadable("cscope.out")
-    cs add cscope.out
-endif
+"------------------
+" indent plugin
+"------------------
+let g:indentLine_char = '│'
+let g:indentLine_fileTypeExclude = ['help', 'nerdtree', 'tagbar', 'markdown']
+let g:indentLine_enabled = 1
+set list
+set listchars=tab:│\ ,trail:·
+set signcolumn=auto
+" 定义函数：一键切换缩进线、list、行号、signcolumn
+function! ToggleIndentAndNumber()
+  if &number 
+    set nolist
+    set listchars=
+    if exists(':IndentLinesDisable')
+      exec 'IndentLinesDisable'
+    endif
+    set signcolumn=no
+    set nonumber norelativenumber
+  else
+    set list
+    set listchars=tab:│\ ,trail:·
+    if exists(':IndentLinesEnable')
+      exec 'IndentLinesEnable'
+    endif
+    set number relativenumber
+  endif
+endfunction
+" bind key f3 toggle
+nnoremap <silent> <F3> :call ToggleIndentAndNumber()<CR>
 
-nmap <Space>s :cs find s <C-R>=expand("<cword>")<CR><CR>
-nmap <Space>g :cs find g <C-R>=expand("<cword>")<CR><CR>
-nmap <Space>c :cs find c <C-R>=expand("<cword>")<CR><CR>
-nmap <Space>t :cs find t <C-R>=expand("<cword>")<CR><CR>
-nmap <Space>e :cs find e <C-R>=expand("<cword>")<CR><CR>
-nmap <Space>f :cs find f <C-R>=expand("<cfile>")<CR><CR>
-nmap <Space>i :cs find i <C-R>=expand("<cfile>")<CR><CR>
-nmap <Space>d :cs find d <C-R>=expand("<cword>")<CR><CR>
 
-nnoremap tt <C-t>
-nnoremap <Tab>f <C-f>
-nnoremap <Tab>b <C-b>
-nnoremap <Tab>u <C-u>
-nnoremap <Tab>d <C-d>
+"------------------
+" NERDTree plugin
+"------------------
+" 打开/关闭 NERDTree 映射（F1）
+" nnoremap <silent> <F1> :NERDTreeToggle<CR>
 
-"=================================================================
+" 查找当前文件在 NERDTree 中的位置（F2），更稳健
+nnoremap <silent> <F2> :call NERDTreeFindSafe()<CR>
 
-" vim-go 插件
-"=================================================================
-let g:go_fmt_command="goimports" " 格式化将默认的 gofmt 替换
-let g:go_info_mode='gopls'
-let g:go_def_mode='gopls'
-let g:go_rename_command='gopls'  " 重命名变量
-let g:go_referrers_mode='gopls'
+function! NERDTreeFindSafe()
+  " 如果当前是在 NERDTree buffer，就切换到上一个窗口
+  if &filetype ==# 'nerdtree'
+    wincmd p
+  endif
 
-let g:go_autodetect_gopath=1
-let g:go_list_type="quickfix"
-let g:go_version_warning=1
-let g:go_highlight_types=1
-let g:go_highlight_fields=1
-let g:go_highlight_functions=1
-let g:go_highlight_function_calls=1
-let g:go_highlight_operators=1
-let g:go_highlight_extra_types=1
-let g:go_highlight_methods=1
-let g:go_highlight_generate_tags=1
-let g:go_highlight_function_parameters = 1
-let g:go_highlight_build_constraints = 1
+  " 当前 buffer 是文件时执行 NERDTreeFind，否则提示
+  if expand('%') !=# ''
+    NERDTreeFind
+  else
+    echo "当前 buffer 不是文件，无法在 NERDTree 中定位"
+  endif
+endfunction
 
-let g:godef_split=2
-
-" push quickfix window always to the bottom
-autocmd FileType qf wincmd J
-
-"==============================================================================
-" NERDTree 插件
-"==============================================================================
-
-" 打开和关闭NERDTree快捷键
-map <F10> :NERDTreeToggle<CR>
 " 显示行号
 let NERDTreeShowLineNumbers=1
 " 打开文件时是否显示目录
@@ -116,27 +83,31 @@ let NERDTreeAutoCenter=1
 " 是否显示隐藏文件
 let NERDTreeShowHidden=0
 " 设置宽度
-" let NERDTreeWinSize=31
+let NERDTreeWinSize=40
 " 忽略一下文件的显示
 let NERDTreeIgnore=['\.pyc','\~$','\.swp']
 " 打开 vim 文件及显示书签列表
 let NERDTreeShowBookmarks=2
 
-" 在终端启动vim时，共享NERDTree
-let g:nerdtree_tabs_open_on_console_startup=1
-let NERDTreeWinSize=40
+let g:nerdtree_tabs_open_on_console_startup=0
+let g:nerdtree_tabs_open_on_new_tab=0
 let g:NERDTreeDirArrowExpandable = '+'
 let g:NERDTreeDirArrowCollapsible = '-'
 let g:NERDTreeWinPos='left'
-"==============================================================================
+let g:nerdtree_tabs_autoclose = 0
 
-"=================================================================
-" vim-airline
-"=================================================================
 
+"------------------
+" vim-airline plugin
+"------------------
 if !exists('g:airline_symbols')
     let g:airline_symbols={}
 endif
+
+let g:airline#extensions#tabline#enabled = 1
+let g:airline#extensions#tabline#formatter = 'default'
+let g:airline#extensions#tabline#formatter = 'unique_tail_improved'
+let g:airline#extensions#tabline#show_buffers = 0
 
 let airline#extensions#tabline#ignore_bufadd_pat =
             \ '\c\vgundo|undotree|vimfiler|tagbar|nerd_tree'
@@ -158,12 +129,11 @@ let g:airline_symbols.readonly = ''
 let g:airline_symbols.linenr = '☰'
 let g:airline_symbols.maxlinenr = ''
 let g:airline_symbols.dirty='⚡'
-
-" let g:airline_theme='jellybeans'
 let g:airline#extensions#tabline#formatter = 'unique_tail'
-"=================================================================
-" LeaderF
-"=================================================================
+
+"------------------
+" LeaderF plugin
+"------------------
 " let g:Lf_ShortcutF='<C-P>'
 " let g:Lf_ShowDevIcons=0
 let g:Lf_WorkingDirectoryMode = 'AF'
@@ -173,7 +143,8 @@ let g:Lf_PreviewInPopup = 1
 let g:Lf_WindowHeight = 0.30
 let g:Lf_FuzzyMatch = 0
 let g:Lf_UseRegex = 1
-let mapleader = '\'
+let mapleader = ","
+noremap \ ,
 " popup mode
 let g:Lf_WindowPosition = 'popup'
 let g:Lf_PreviewInPopup = 1
@@ -195,13 +166,10 @@ let g:Lf_PreviewResult = {
         \ 'Rg': 0,
         \ 'Gtags': 0
         \}
-
 noremap <C-G> :<C-U><C-R>=printf("Leaderf rg --regexMode --auto-preview -e \"%s\" ", expand("<cword>"))<CR>
 noremap <C-P> :Leaderf file --regexMode<CR>
 noremap <C-L> :Leaderf buffer --regexMode<CR>
-" let g:Lf_ExternalCommand = 'rg --files --no-ignore-vcs'
-" let g:Lf_ShortcutF = '<c-p>'
-" let g:Lf_ShortcutB = '<c-l>'
+autocmd FileType leaderf let g:Lf_CommandMap = {'t': ['<C-R><C-T>']}
 noremap <leader>f :LeaderfSelf<cr>
 noremap <leader>fm :LeaderfMru<cr>
 noremap <leader>ff :LeaderfFunction<cr>
@@ -209,7 +177,6 @@ noremap <leader>fb :LeaderfBuffer<cr>
 noremap <leader>ft :LeaderfBufTag<cr>
 noremap <leader>fl :LeaderfLine<cr>
 noremap <leader>fw :LeaderfWindow<cr>
-noremap <leader>frr :LeaderfRgRecall<cr>
 
 nmap <unique> <leader>fr <Plug>LeaderfRgPrompt
 nmap <unique> <leader>fra <Plug>LeaderfRgCwordLiteralNoBoundary
@@ -222,12 +189,10 @@ vmap <unique> <leader>frb <Plug>LeaderfRgVisualLiteralBoundary
 vmap <unique> <leader>frc <Plug>LeaderfRgVisualRegexNoBoundary
 vmap <unique> <leader>frd <Plug>LeaderfRgVisualRegexBoundary
 
-"=================================================================
 
-
-"=================================================================
-" majutsushi/tagbar 插件
-"=================================================================
+"------------------
+" tagbar plugin
+"------------------
 " TextEdit might fail if hidden is not set.
 nmap <F9> :TagbarToggle<CR>
 
@@ -260,12 +225,9 @@ let g:tagbar_type_go = {
 \ }
 
 
-"=================================================================
-" coc-vim
-"=================================================================
-" TextEdit might fail if hidden is not set.
-set hidden
-
+"------------------
+" coc-vim plugin
+"------------------
 " Some servers have issues with backup files, see #649.
 set nobackup
 set nowritebackup
@@ -289,16 +251,18 @@ else
   set signcolumn=yes
 endif
 
+
 " Use tab for trigger completion with characters ahead and navigate.
 " NOTE: Use command ':verbose imap <tab>' to make sure tab is not mapped by
 " other plugin before putting this into your config.
 inoremap <silent><expr> <TAB>
       \ pumvisible() ? "\<C-n>" :
-      \ <SID>check_back_space() ? "\<TAB>" :
+      \ coc#expandableOrJumpable() ? "\<C-r>=coc#rpc#request('doKeymap', ['snippets-expand-jump',''])<CR>" :
+      \ CheckBackspace() ? "\<Tab>" :
       \ coc#refresh()
-inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+inoremap <silent><expr> <CR> pumvisible() ? coc#_select_confirm() : "\<CR>"
 
-function! s:check_back_space() abort
+function! CheckBackspace() abort
   let col = col('.') - 1
   return !col || getline('.')[col - 1]  =~# '\s'
 endfunction
@@ -308,15 +272,6 @@ if has('nvim')
   inoremap <silent><expr> <c-space> coc#refresh()
 else
   inoremap <silent><expr> <c-@> coc#refresh()
-endif
-
-" Use <cr> to confirm completion, `<C-g>u` means break undo chain at current
-" position. Coc only does snippet and additional edit on confirm.
-" <cr> could be remapped by other vim plugin, try `:verbose imap <CR>`.
-if exists('*complete_info')
-  inoremap <expr> <cr> complete_info()["selected"] != "-1" ? "\<C-y>" : "\<C-g>u\<CR>"
-else
-  inoremap <expr> <cr> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
 endif
 
 " Use `[g` and `]g` to navigate diagnostics
@@ -332,7 +287,6 @@ nmap <silent> gr <Plug>(coc-references)
 
 " Use K to show documentation in preview window.
 nnoremap <silent> K :call <SID>show_documentation()<CR>
-
 function! s:show_documentation()
   if (index(['vim','help'], &filetype) >= 0)
     execute 'h '.expand('<cword>')
@@ -340,9 +294,7 @@ function! s:show_documentation()
     call CocActionAsync('doHover')
   endif
 endfunction
-
-" Highlight the symbol and its references when holding the cursor.
-autocmd CursorHold * silent call CocActionAsync('highlight')
+nnoremap <silent> K :call CocActionAsync('doHover')<CR>
 
 " Symbol renaming.
 nmap <leader>rn <Plug>(coc-rename)
@@ -351,13 +303,19 @@ nmap <leader>rn <Plug>(coc-rename)
 xmap <leader>f  <Plug>(coc-format-selected)
 nmap <leader>f  <Plug>(coc-format-selected)
 
-augroup mygroup
+augroup CocAutoGroup
   autocmd!
-  " Setup formatexpr specified filetype(s).
+
+  " 格式化代码 on save
+  autocmd BufWritePre * silent! call CocAction('format')
+
+  " Setup formatexpr for部分语言
   autocmd FileType typescript,json setl formatexpr=CocAction('formatSelected')
-  " Update signature help on jump placeholder.
+
+  " 跳转占位符后自动显示函数签名
   autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
-augroup end
+augroup END
+
 
 " Applying codeAction to the selected region.
 " Example: `<leader>aap` for current paragraph
@@ -417,39 +375,45 @@ nnoremap <silent><nowait> <space>k  :<C-u>CocPrev<CR>
 " Resume latest coc list.
 nnoremap <silent><nowait> <space>p  :<C-u>CocListResume<CR>
 
-"=================================================================
+"------------------
+" quickfix window
+"------------------
+" cquickfix window 
+nmap <leader>cw :copen<CR>
+" cquickfix next 
+nmap <leader>cn :cn<CR>
+" cquickfix previous
+nmap <leader>cp :cp<CR>
+" cquickfix kclose
+nmap <leader>ck :cclose<CR>
 
-nmap cw :copen<cr>
-nmap cn :cn<cr>
-nmap cp :cp<cr>
-nmap ck :cclose<cr>
+"------------------
+" vim test
+"------------------
+let test#go#runner = 'gotest'
+let test#strategy = 'dispatch'
+" 输出详细
+let test#go#gotest#options = '-v'
+ " 让 test 自动打开 quickfix，不保持测试前的屏幕状态
+let g:test#preserve_screen = 0
+nnoremap <leader>t :TestNearest<CR>
+nnoremap <leader>T :TestFile<CR>
 
-"=================================================================
 
-colorscheme gruvbox
-set bg=dark
-
-"=================================================================
-
-if exists('+colorcolumn')
-    set colorcolumn=100
-else
-    au BufWinEnter * let w:m2=matchadd('ErrorMsg', '\%>100v.\+', -1)
-endif
-
-set cursorline
-
+"------------------
+" plugin
+"------------------
 call plug#begin()
-Plug 'lukas-reineke/indent-blankline.nvim'
-Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries'}
-Plug 'scrooloose/nerdtree'
-Plug 'dyng/ctrlsf.vim'
+Plug 'Yggdroot/indentLine'
+Plug 'preservim/nerdtree'
+Plug 'jistr/vim-nerdtree-tabs'
 Plug 'yggdroot/leaderf'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'tpope/vim-fugitive'
-Plug 'scrooloose/nerdcommenter'
+Plug 'tpope/vim-surround'
+Plug 'tpope/vim-commentary'
+Plug 'tpope/vim-dispatch'
+Plug 'vim-test/vim-test'
 Plug 'vim-airline/vim-airline'
 Plug 'majutsushi/tagbar'
-Plug 'vim-scripts/SuperTab'
-Plug 'jistr/vim-nerdtree-tabs'
 call plug#end()
